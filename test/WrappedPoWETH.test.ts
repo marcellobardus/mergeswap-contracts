@@ -89,6 +89,7 @@ describe("ReceiveWPoW", function () {
       await wrappedPowETH.mint(
         "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
         relayer.address,
+        "0",
         blockNumber,
         storageProofEncoded
       );
@@ -116,6 +117,7 @@ describe("ReceiveWPoW", function () {
       await wrappedPowETH.mint(
         "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
         relayer.address,
+        "0",
         blockNumber,
         storageProofEncoded
       );
@@ -124,6 +126,7 @@ describe("ReceiveWPoW", function () {
         wrappedPowETH.mint(
           "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
           relayer.address,
+          "0",
           blockNumber,
           storageProofEncoded
         )

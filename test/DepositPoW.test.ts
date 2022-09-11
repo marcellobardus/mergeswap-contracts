@@ -12,7 +12,11 @@ describe("DepositPoW", function () {
   const deployDepositPoWFixture = async () => {
     const [user, relayer] = await ethers.getSigners();
     const DepositPoW = await ethers.getContractFactory("DepositPoW");
-    const depositPoW = await DepositPoW.deploy(relayer.address);
+    const depositPoW = await DepositPoW.deploy(
+      relayer.address,
+      "0x6b175474e89094c44da98b954eedeac495271d0f",
+      2
+    );
     return { user, relayer, depositPoW };
   };
 
@@ -39,7 +43,7 @@ describe("DepositPoW", function () {
 
       expect(setDepositInfo).equal(depositInfo);
 
-      const paddedSlot = hexZeroPad("0x4", 32);
+      const paddedSlot = hexZeroPad("0x3", 32);
       const paddedKey = hexZeroPad("0x0", 32);
       const itemSlot = keccak256(paddedKey + paddedSlot.slice(2));
 

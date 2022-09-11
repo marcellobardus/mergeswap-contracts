@@ -16,26 +16,68 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
 
     event Deposit(uint256 id, uint256 amount, address depositor, address recipient);
 
-    address public immutable relayer;
-    uint256 public depositsCount;
+    uint8 private constant ACCOUNT_STORAGE_ROOT_INDEX = 2;
 
-    mapping(uint256 => bytes32) public stateRoots;
+    address public immutable relayer;
+    address public immutable withdrawalContract;
+    uint256 public immutable withdrawalsMapSlotIndex;
+
+    uint256 public depositsCount;
     mapping(uint256 => bytes32) public deposits;
 
-    constructor(address _relayer) {
+    mapping(uint256 => bytes32) public withdrawalContractStorageRoots;
+    mapping(uint256 => bytes32) public stateRoots;
+
+    mapping(uint256 => bool) public processedWithdrawals;
+
+    constructor(
+        address _relayer,
+        address _withdrawalContract,
+        uint256 _withdrawalsMapSlotIndex
+    ) {
         relayer = _relayer;
+        withdrawalContract = _withdrawalContract;
+        withdrawalsMapSlotIndex = _withdrawalsMapSlotIndex;
     }
 
-    // TODO nonreentrant
     function deposit(uint256 amount, address recipient) public payable nonReentrant whenNotPaused {
         require(msg.value == amount, "ERR_INVALID_AMOUNT");
         deposits[depositsCount] = keccak256(abi.encode(amount, recipient));
         emit Deposit(depositsCount++, amount, msg.sender, recipient);
     }
 
+    function verifyAccount(uint256 blockNumber, bytes memory accountProof) public {
+        bytes32 stateRoot = stateRoots[blockNumber];
+        require(stateRoot != bytes32(0), "ERR_STATE_ROOT_NOT_AVAILABLE");
+
+        bytes32 accountProofPath = keccak256(abi.encodePacked(withdrawalContract));
+        bytes memory accountRLP = accountProof.verify(stateRoot, accountProofPath); // reverts if proof is invalid
+        bytes32 accountStorageRoot = bytes32(accountRLP.toRLPItem().toList()[ACCOUNT_STORAGE_ROOT_INDEX].toUint());
+
+        withdrawalContractStorageRoots[blockNumber] = accountStorageRoot;
+    }
+
     // TODO nonreentrant
-    function withdraw(uint256 withdrawalId, bytes calldata proof) public payable {
-        payable(msg.sender).transfer(0);
+    function withdraw(
+        uint256 withdrawalId,
+        address recipient,
+        uint256 amount,
+        uint256 withdrawalBlockNumber,
+        bytes memory storageProof
+    ) public nonReentrant {
+        bytes32 contractStorageRoot = withdrawalContractStorageRoots[withdrawalBlockNumber];
+        require(contractStorageRoot != bytes32(0), "ERR_STORAGE_ROOT_NOT_AVAILABLE");
+
+        uint256 slot = uint256(keccak256(abi.encode(withdrawalId, withdrawalsMapSlotIndex)));
+
+        require(!processedWithdrawals[withdrawalId], "ERR_WITHDRAWAL_ALREADY_PROCESSED");
+
+        bytes32 proofPath = keccak256(abi.encodePacked(slot));
+        uint256 slotValue = storageProof.verify(contractStorageRoot, proofPath).toRLPItem().toUint(); // reverts if proof is invalid
+        // TODO ensure slotValue == keccak(recipient, amount)
+
+        processedWithdrawals[withdrawalId] = true;
+        payable(msg.sender).transfer(amount);
     }
 
     function relayStateRoot(

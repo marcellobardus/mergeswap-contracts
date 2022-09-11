@@ -12,6 +12,8 @@ contract WrappedPoWETH is ERC20 {
     using RLP for RLP.RLPItem;
     using RLP for bytes;
 
+    event Withdrawal(uint256 id, uint256 amount, address withdrawMadeBy, address recipient);
+
     uint8 private constant ACCOUNT_STORAGE_ROOT_INDEX = 2;
 
     address public immutable relayer;
@@ -19,7 +21,7 @@ contract WrappedPoWETH is ERC20 {
     uint256 public immutable depositsMapSlotIndex;
 
     uint256 public withdrawalsCount;
-    mapping(uint256 => uint256) public withdrawals;
+    mapping(uint256 => bytes32) public withdrawals;
 
     mapping(uint256 => bytes32) public stateRoots;
     mapping(uint256 => bytes32) public depositContractStorageRoots;
@@ -53,6 +55,7 @@ contract WrappedPoWETH is ERC20 {
     function mint(
         uint256 depositId,
         address recipient,
+        uint256 amount,
         uint256 depositBlockNumber,
         bytes memory storageProof
     ) public {
@@ -65,13 +68,16 @@ contract WrappedPoWETH is ERC20 {
 
         bytes32 proofPath = keccak256(abi.encodePacked(slot));
         uint256 slotValue = storageProof.verify(accountStorageRoot, proofPath).toRLPItem().toUint(); // reverts if proof is invalid
+        // TODO ensure slotValue == keccak(recipient, amount)
 
         processedDeposits[depositId] = true;
         _mint(recipient, slotValue);
     }
 
-    function withdraw(uint256 amount) public {
-        payable(msg.sender).transfer(amount);
+    function withdraw(uint256 amount, address recipient) public {
+        _burn(msg.sender, amount);
+        withdrawals[withdrawalsCount] = keccak256(abi.encode(amount, recipient));
+        emit Withdrawal(withdrawalsCount++, amount, msg.sender, recipient);
     }
 
     function relayStateRoot(
