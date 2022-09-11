@@ -30,6 +30,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
+    "@types/dotenv": "^8.2.0",
+    "dotenv": "^16.0.2",
     "rlp": "^2.1.0"
   }
 }
