@@ -14,23 +14,23 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
     using RLP for RLP.RLPItem;
     using RLP for bytes;
 
-    event Deposit(uint256 id, uint256 amount, address depositor);
+    event Deposit(uint256 id, uint256 amount, address depositor, address recipient);
 
     address public immutable relayer;
     uint256 public depositsCount;
 
     mapping(uint256 => bytes32) public stateRoots;
-    mapping(uint256 => uint256) public deposits;
+    mapping(uint256 => bytes32) public deposits;
 
     constructor(address _relayer) {
         relayer = _relayer;
     }
 
     // TODO nonreentrant
-    function deposit(uint256 amount) public payable nonReentrant whenNotPaused {
+    function deposit(uint256 amount, address recipient) public payable nonReentrant whenNotPaused {
         require(msg.value == amount, "ERR_INVALID_AMOUNT");
-        deposits[depositsCount] = amount;
-        emit Deposit(depositsCount++, amount, msg.sender);
+        deposits[depositsCount] = keccak256(abi.encode(amount, recipient));
+        emit Deposit(depositsCount++, amount, msg.sender, recipient);
     }
 
     // TODO nonreentrant

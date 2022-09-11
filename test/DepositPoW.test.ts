@@ -1,6 +1,11 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
-import { hexZeroPad, keccak256, parseEther } from "ethers/lib/utils";
+import {
+  defaultAbiCoder,
+  hexZeroPad,
+  keccak256,
+  parseEther,
+} from "ethers/lib/utils";
 import { ethers } from "hardhat";
 
 describe("DepositPoW", function () {
@@ -19,12 +24,20 @@ describe("DepositPoW", function () {
 
       await depositPoW
         .connect(user)
-        .deposit(parseEther("1"), { value: parseEther("1") });
+        .deposit(parseEther("1"), user.address, { value: parseEther("1") });
 
       const depositsCount = await depositPoW.depositsCount();
       expect(depositsCount).equal(1);
 
-      const depositedAmount = await depositPoW.deposits(0);
+      const depositInfo = keccak256(
+        defaultAbiCoder.encode(
+          ["uint256", "address"],
+          [parseEther("1"), user.address]
+        )
+      );
+      const setDepositInfo = await depositPoW.deposits(0);
+
+      expect(setDepositInfo).equal(depositInfo);
 
       const paddedSlot = hexZeroPad("0x4", 32);
       const paddedKey = hexZeroPad("0x0", 32);
@@ -35,7 +48,7 @@ describe("DepositPoW", function () {
         itemSlot
       );
 
-      expect(depositedAmount).equal(storageAt);
+      expect(setDepositInfo).equal(storageAt);
     });
 
     it("Should revert if msg.value is below amount", async () => {
@@ -46,7 +59,7 @@ describe("DepositPoW", function () {
       expect(
         depositPoW
           .connect(user)
-          .deposit(parseEther("1"), { value: parseEther("0") })
+          .deposit(parseEther("1"), user.address, { value: parseEther("0") })
       ).to.throw;
     });
   });
