@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-gas-reporter";
 import "hardhat-storage-layout";
 
 const config: HardhatUserConfig = {
@@ -16,6 +17,12 @@ const config: HardhatUserConfig = {
         },
       },
     },
+  },
+  networks: {
+    hardhat: {},
+  },
+  gasReporter: {
+    enabled: true,
   },
 };
 

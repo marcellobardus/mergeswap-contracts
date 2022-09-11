@@ -47,17 +47,16 @@ contract WrappedPoWETH is ERC20 {
         depositContractStorageRoots[blockNumber] = accountStorageRoot;
     }
 
-    // TODO nonreentrant
     function mint(
         uint256 depositId,
         address recipient,
         uint256 depositBlockNumber,
         bytes memory storageProof
-    ) public payable {
+    ) public {
         bytes32 accountStorageRoot = depositContractStorageRoots[depositBlockNumber];
         require(accountStorageRoot != bytes32(0), "ERR_STORAGE_ROOT_NOT_AVAILABLE");
 
-        uint256 slot = uint256(keccak256(abi.encodePacked(depositId, depositsMapSlotIndex)));
+        uint256 slot = uint256(keccak256(abi.encode(depositId, depositsMapSlotIndex)));
 
         require(!processedDeposits[depositId], "ERR_DEPOSIT_ALREADY_PROCESSED");
 
@@ -65,12 +64,10 @@ contract WrappedPoWETH is ERC20 {
         uint256 slotValue = storageProof.verify(accountStorageRoot, proofPath).toRLPItem().toUint();
 
         processedDeposits[depositId] = true;
-
         _mint(recipient, slotValue);
     }
 
-    // TODO nonreentrant
-    function withdraw(uint256 amount) public payable {
+    function withdraw(uint256 amount) public {
         payable(msg.sender).transfer(amount);
     }
 

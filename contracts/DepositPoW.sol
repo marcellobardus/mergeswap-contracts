@@ -43,7 +43,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         bytes32 stateRoot,
         bytes calldata signature
     ) public {
-        require(relayer == ECDSA.recover(stateRoot, signature));
+        require(relayer == ECDSA.recover(stateRoot, signature), "ERR_INVALID_SIGNATURE");
         stateRoots[blockNumber] = stateRoot;
     }
 }
