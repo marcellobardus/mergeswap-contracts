@@ -46,7 +46,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         emit Deposit(depositsCount++, amount, msg.sender, recipient);
     }
 
-    function verifyAccount(uint256 blockNumber, bytes memory accountProof) public {
+    function updateWithdrawalContractStorageRoot(uint256 blockNumber, bytes memory accountProof) public {
         bytes32 stateRoot = stateRoots[blockNumber];
         require(stateRoot != bytes32(0), "ERR_STATE_ROOT_NOT_AVAILABLE");
 
@@ -77,7 +77,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         // TODO ensure slotValue == keccak(recipient, amount)
 
         processedWithdrawals[withdrawalId] = true;
-        payable(msg.sender).transfer(amount);
+        payable(recipient).transfer(amount);
     }
 
     function relayStateRoot(

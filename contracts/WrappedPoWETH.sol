@@ -38,7 +38,7 @@ contract WrappedPoWETH is ERC20 {
         depositsMapSlotIndex = _depositsMapSlotIndex;
     }
 
-    function verifyAccount(uint256 blockNumber, bytes memory accountProof) public {
+    function updateDepositContractStorageRoot(uint256 blockNumber, bytes memory accountProof) public {
         bytes32 stateRoot = stateRoots[blockNumber];
         require(stateRoot != bytes32(0), "ERR_STATE_ROOT_NOT_AVAILABLE");
 

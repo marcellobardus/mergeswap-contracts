@@ -46,8 +46,8 @@ describe("ReceiveWPoW", function () {
     });
   });
 
-  describe("Verify account", () => {
-    it("Should verify account", async () => {
+  describe("Update deposit contract storage root", () => {
+    it("Should update deposit contract storage root", async () => {
       const { user, relayer, wrappedPowETH } = await loadFixture(
         deployReceiveWPoWFixture
       );
@@ -60,7 +60,10 @@ describe("ReceiveWPoW", function () {
         .relayStateRoot(blockNumber, stateRoot, sig);
 
       const accountProofEncoded = encodeProof(proof.accountProof);
-      await wrappedPowETH.verifyAccount(blockNumber, accountProofEncoded);
+      await wrappedPowETH.updateDepositContractStorageRoot(
+        blockNumber,
+        accountProofEncoded
+      );
 
       const setStorageRoot = await wrappedPowETH.depositContractStorageRoots(
         blockNumber
@@ -83,7 +86,10 @@ describe("ReceiveWPoW", function () {
         .relayStateRoot(blockNumber, stateRoot, sig);
 
       const accountProofEncoded = encodeProof(proof.accountProof);
-      await wrappedPowETH.verifyAccount(blockNumber, accountProofEncoded);
+      await wrappedPowETH.updateDepositContractStorageRoot(
+        blockNumber,
+        accountProofEncoded
+      );
 
       const storageProofEncoded = encodeProof(proof.storageProof[0].proof);
       await wrappedPowETH.mint(
@@ -111,7 +117,10 @@ describe("ReceiveWPoW", function () {
         .relayStateRoot(blockNumber, stateRoot, sig);
 
       const accountProofEncoded = encodeProof(proof.accountProof);
-      await wrappedPowETH.verifyAccount(blockNumber, accountProofEncoded);
+      await wrappedPowETH.updateDepositContractStorageRoot(
+        blockNumber,
+        accountProofEncoded
+      );
 
       const storageProofEncoded = encodeProof(proof.storageProof[0].proof);
       await wrappedPowETH.mint(
