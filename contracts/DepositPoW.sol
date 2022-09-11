@@ -16,7 +16,10 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
 
     event Deposit(uint256 id, uint256 amount, address depositor, address recipient);
 
+    error IncorrectNetwork();
+
     uint8 private constant ACCOUNT_STORAGE_ROOT_INDEX = 2;
+    uint256 internal constant MAX_DIFFICULTY = 2**64;
 
     address public immutable relayer;
     address public immutable withdrawalContract;
@@ -40,13 +43,21 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         withdrawalsMapSlotIndex = _withdrawalsMapSlotIndex;
     }
 
-    function deposit(uint256 amount, address recipient) public payable nonReentrant whenNotPaused {
+    // Only succeeds for PoW network
+    modifier onlyPoW() {
+        if (isEthMainnet()) {
+            revert IncorrectNetwork();
+        }
+        _;
+    }
+
+    function deposit(uint256 amount, address recipient) public payable nonReentrant whenNotPaused onlyPoW {
         require(msg.value == amount, "ERR_INVALID_AMOUNT");
         deposits[depositsCount] = keccak256(abi.encode(amount, recipient));
         emit Deposit(depositsCount++, amount, msg.sender, recipient);
     }
 
-    function updateWithdrawalContractStorageRoot(uint256 blockNumber, bytes memory accountProof) public {
+    function updateWithdrawalContractStorageRoot(uint256 blockNumber, bytes memory accountProof) public onlyPoW {
         bytes32 stateRoot = stateRoots[blockNumber];
         require(stateRoot != bytes32(0), "ERR_STATE_ROOT_NOT_AVAILABLE");
 
@@ -64,7 +75,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         uint256 amount,
         uint256 withdrawalBlockNumber,
         bytes memory storageProof
-    ) public nonReentrant {
+    ) public nonReentrant onlyPoW {
         bytes32 contractStorageRoot = withdrawalContractStorageRoots[withdrawalBlockNumber];
         require(contractStorageRoot != bytes32(0), "ERR_STORAGE_ROOT_NOT_AVAILABLE");
 
@@ -84,8 +95,12 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         uint256 blockNumber,
         bytes32 stateRoot,
         bytes calldata signature
-    ) public {
+    ) public onlyPoW {
         require(relayer == ECDSA.recover(stateRoot, signature), "ERR_INVALID_SIGNATURE");
         stateRoots[blockNumber] = stateRoot;
+    }
+
+    function isEthMainnet() internal view returns (bool result) {
+        return (block.difficulty > MAX_DIFFICULTY);
     }
 }
