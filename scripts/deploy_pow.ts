@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { predictContractAddress } from "./utils/predict-address";
+import etherscanVerify from "./utils/etherscan-verify";
 
 async function main() {
   dotenv.config();
@@ -21,6 +22,15 @@ async function main() {
   await depositPoW.deployed();
 
   console.log(`Deployed DepositPoW to address: ${depositPoW.address}`);
+
+  setTimeout(async () => {
+    console.debug('Constructor arguments', {
+      RELAYER,
+      withdrawalsContract
+    });
+  
+    return etherscanVerify(depositPoW.address, RELAYER!, withdrawalsContract!, 6);
+  }, 120 * 1000); // Invoke after 2 minutes (wait for indexation).
 }
 
 // We recommend this pattern to be able to use async/await everywhere

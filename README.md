@@ -1,13 +1,27 @@
-# Sample Hardhat Project
+# MergeSwap Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+## Getting Started
 
-Try running some of the following tasks:
+Create a `.env` file with actual values (see `.env.example` as an example format).
 
+Install the packages:
 ```shell
-npx hardhat help
-npx hardhat test
+yarn
+```
+
+## Compile
+```shell
+npx hardhat compile
+```
+
+## Test
+```shell
 GAS_REPORT=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+```
+
+### Deploy & Verify bytecode
+```shell
+npm run deploy:pow
+
+npm run deploy:pos
 ```
