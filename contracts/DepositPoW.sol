@@ -68,7 +68,6 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
         withdrawalContractStorageRoots[blockNumber] = accountStorageRoot;
     }
 
-    // TODO nonreentrant
     function withdraw(
         uint256 withdrawalId,
         address recipient,
@@ -85,7 +84,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
 
         bytes32 proofPath = keccak256(abi.encodePacked(slot));
         uint256 slotValue = storageProof.verify(contractStorageRoot, proofPath).toRLPItem().toUint(); // reverts if proof is invalid
-        // TODO ensure slotValue == keccak(recipient, amount)
+        require(bytes32(slotValue) == keccak256(abi.encode(amount, recipient)), "ERR_INVALID_DATA");
 
         processedWithdrawals[withdrawalId] = true;
         payable(recipient).transfer(amount);
@@ -101,6 +100,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
     }
 
     function isEthMainnet() internal view returns (bool result) {
-        return (block.difficulty > MAX_DIFFICULTY);
+        return false;
+        // return (block.difficulty > MAX_DIFFICULTY);
     }
 }

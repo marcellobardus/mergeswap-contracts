@@ -49,9 +49,6 @@ contract WrappedPoWETH is ERC20 {
         depositContractStorageRoots[blockNumber] = accountStorageRoot;
     }
 
-    // TODO make it secure currently anyone can claim a deposit
-    // Solution: the value under deposit id should be keccak(value, recipient)
-    // Solution: include a new parameter deposit data which is a tuple of (value, recipient)
     function mint(
         uint256 depositId,
         address recipient,
@@ -68,10 +65,11 @@ contract WrappedPoWETH is ERC20 {
 
         bytes32 proofPath = keccak256(abi.encodePacked(slot));
         uint256 slotValue = storageProof.verify(accountStorageRoot, proofPath).toRLPItem().toUint(); // reverts if proof is invalid
-        // TODO ensure slotValue == keccak(recipient, amount)
+
+        require(keccak256(abi.encode(amount, recipient)) == bytes32(slotValue), "ERR_INVALID_DATA");
 
         processedDeposits[depositId] = true;
-        _mint(recipient, slotValue);
+        _mint(recipient, amount);
     }
 
     function withdraw(uint256 amount, address recipient) public {

@@ -3,9 +3,9 @@ import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { Wallet } from "ethers";
-import { joinSignature } from "ethers/lib/utils";
+import { joinSignature, parseEther } from "ethers/lib/utils";
 
-import { proof, stateRoot } from "./mocks/proof";
+import { powProof, powStateRoot } from "./mocks/proof";
 import { encodeProof } from "./utils/encode-proof";
 
 describe("ReceiveWPoW", function () {
@@ -16,8 +16,8 @@ describe("ReceiveWPoW", function () {
     const WrappedPoWETH = await ethers.getContractFactory("WrappedPoWETH");
     const wrappedPowETH = await WrappedPoWETH.deploy(
       relayer.address,
-      "0x6b175474e89094c44da98b954eedeac495271d0f",
-      2
+      "0xE0f8a92b85aD593d31565Dd0666A45b875Bd9b8A",
+      3
     );
     return { user, relayer, wrappedPowETH };
   };
@@ -33,16 +33,16 @@ describe("ReceiveWPoW", function () {
       const { user, relayer, wrappedPowETH } = await loadFixture(
         deployReceiveWPoWFixture
       );
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(powStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await wrappedPowETH
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, powStateRoot, sig);
 
       const setStateRoot = await wrappedPowETH.stateRoots(blockNumber);
-      expect(setStateRoot).equal(stateRoot);
+      expect(setStateRoot).equal(powStateRoot);
     });
   });
 
@@ -51,15 +51,15 @@ describe("ReceiveWPoW", function () {
       const { user, relayer, wrappedPowETH } = await loadFixture(
         deployReceiveWPoWFixture
       );
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(powStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await wrappedPowETH
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, powStateRoot, sig);
 
-      const accountProofEncoded = encodeProof(proof.accountProof);
+      const accountProofEncoded = encodeProof(powProof.accountProof);
       await wrappedPowETH.updateDepositContractStorageRoot(
         blockNumber,
         accountProofEncoded
@@ -68,7 +68,7 @@ describe("ReceiveWPoW", function () {
       const setStorageRoot = await wrappedPowETH.depositContractStorageRoots(
         blockNumber
       );
-      expect(setStorageRoot).equal(proof.storageHash);
+      expect(setStorageRoot).equal(powProof.storageHash);
     });
   });
 
@@ -77,72 +77,76 @@ describe("ReceiveWPoW", function () {
       const { user, relayer, wrappedPowETH } = await loadFixture(
         deployReceiveWPoWFixture
       );
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(powStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await wrappedPowETH
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, powStateRoot, sig);
 
-      const accountProofEncoded = encodeProof(proof.accountProof);
+      const accountProofEncoded = encodeProof(powProof.accountProof);
       await wrappedPowETH.updateDepositContractStorageRoot(
         blockNumber,
         accountProofEncoded
       );
 
-      const storageProofEncoded = encodeProof(proof.storageProof[0].proof);
+      const storageProofEncoded = encodeProof(powProof.storageProof[0].proof);
       await wrappedPowETH.mint(
-        "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
-        relayer.address,
         "0",
+        "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398",
+        parseEther("1"),
         blockNumber,
         storageProofEncoded
       );
 
-      const tokensMinted = await wrappedPowETH.balanceOf(relayer.address);
-      expect(tokensMinted).equal(proof.storageProof[0].value);
+      const tokensMinted = await wrappedPowETH.balanceOf(
+        "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398"
+      );
+      expect(tokensMinted).equal(parseEther("1"));
     });
 
     it("Should revert in case a deposit is attempted to be minted twice", async () => {
       const { user, relayer, wrappedPowETH } = await loadFixture(
         deployReceiveWPoWFixture
       );
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(powStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await wrappedPowETH
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, powStateRoot, sig);
 
-      const accountProofEncoded = encodeProof(proof.accountProof);
+      const accountProofEncoded = encodeProof(powProof.accountProof);
       await wrappedPowETH.updateDepositContractStorageRoot(
         blockNumber,
         accountProofEncoded
       );
 
-      const storageProofEncoded = encodeProof(proof.storageProof[0].proof);
+      const storageProofEncoded = encodeProof(powProof.storageProof[0].proof);
       await wrappedPowETH.mint(
-        "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
-        relayer.address,
         "0",
+        "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398",
+        parseEther("1"),
         blockNumber,
         storageProofEncoded
       );
 
       expect(
         wrappedPowETH.mint(
-          "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
-          relayer.address,
           "0",
+          "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398",
+          parseEther("1"),
           blockNumber,
           storageProofEncoded
         )
       ).throws;
 
-      const tokensMinted = await wrappedPowETH.balanceOf(relayer.address);
-      expect(tokensMinted).equal(proof.storageProof[0].value);
+      const tokensMinted = await wrappedPowETH.balanceOf(
+        "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398"
+      );
+      expect(tokensMinted).equal(parseEther("1"));
     });
   });
 });

@@ -9,7 +9,7 @@ import {
   parseEther,
 } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { proof, stateRoot } from "./mocks/proof";
+import { posProof, posStateRoot } from "./mocks/proof";
 import { encodeProof } from "./utils/encode-proof";
 
 describe("DepositPoW", function () {
@@ -20,8 +20,8 @@ describe("DepositPoW", function () {
     const DepositPoW = await ethers.getContractFactory("DepositPoW");
     const depositPoW = await DepositPoW.deploy(
       relayer.address,
-      "0x6b175474e89094c44da98b954eedeac495271d0f",
-      2
+      "0x99704d67e180906ca3bab391076bd9656e6312e9",
+      6
     );
     return { user, relayer, depositPoW };
   };
@@ -80,16 +80,16 @@ describe("DepositPoW", function () {
         deployDepositPoWFixture
       );
 
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(posStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await depositPoW
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, posStateRoot, sig);
 
       const setStateRoot = await depositPoW.stateRoots(blockNumber);
-      expect(setStateRoot).equal(stateRoot);
+      expect(setStateRoot).equal(posStateRoot);
     });
   });
 
@@ -99,15 +99,15 @@ describe("DepositPoW", function () {
         deployDepositPoWFixture
       );
 
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(posStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await depositPoW
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, posStateRoot, sig);
 
-      const accountProofEncoded = encodeProof(proof.accountProof);
+      const accountProofEncoded = encodeProof(posProof.accountProof);
       await depositPoW.updateWithdrawalContractStorageRoot(
         blockNumber,
         accountProofEncoded
@@ -116,7 +116,7 @@ describe("DepositPoW", function () {
       const setStorageRoot = await depositPoW.withdrawalContractStorageRoots(
         blockNumber
       );
-      expect(setStorageRoot).equal(proof.storageHash);
+      expect(setStorageRoot).equal(posProof.storageHash);
     });
   });
 
@@ -126,24 +126,24 @@ describe("DepositPoW", function () {
         deployDepositPoWFixture
       );
 
-      const sigRaw = await relayer._signingKey().signDigest(stateRoot);
+      const sigRaw = await relayer._signingKey().signDigest(posStateRoot);
       const sig = joinSignature(sigRaw);
 
       const blockNumber = 10;
       await depositPoW
         .connect(user)
-        .relayStateRoot(blockNumber, stateRoot, sig);
+        .relayStateRoot(blockNumber, posStateRoot, sig);
 
-      const accountProofEncoded = encodeProof(proof.accountProof);
+      const accountProofEncoded = encodeProof(posProof.accountProof);
       await depositPoW.updateWithdrawalContractStorageRoot(
         blockNumber,
         accountProofEncoded
       );
 
-      const storageProofEncoded = encodeProof(proof.storageProof[0].proof);
+      const storageProofEncoded = encodeProof(posProof.storageProof[0].proof);
       await depositPoW.withdraw(
-        "0xf37Fd9185Bb5657D7E57DDEA268Fe56C2458F675",
-        relayer.address,
+        "0",
+        "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398",
         "0",
         blockNumber,
         storageProofEncoded
