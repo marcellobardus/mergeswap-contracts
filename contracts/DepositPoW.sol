@@ -4,17 +4,20 @@ pragma solidity ^0.8.9;
 import {TrieProofs} from "./lib/TrieProofs.sol";
 import {RLP} from "./lib/RLP.sol";
 
+import {Multicall} from "./Multicall.sol";
+
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
+contract DepositPoW is ReentrancyGuard, Pausable, Ownable, Multicall {
     using TrieProofs for bytes;
     using RLP for RLP.RLPItem;
     using RLP for bytes;
 
     event Deposit(uint256 id, uint256 amount, address depositor, address recipient);
+    event StateRootRelay(uint256 block, bytes32 root);
 
     error IncorrectNetwork();
 
@@ -97,6 +100,7 @@ contract DepositPoW is ReentrancyGuard, Pausable, Ownable {
     ) public onlyPoW {
         require(relayer == ECDSA.recover(stateRoot, signature), "ERR_INVALID_SIGNATURE");
         stateRoots[blockNumber] = stateRoot;
+        emit StateRootRelay(blockNumber, stateRoot);
     }
 
     function isEthMainnet() internal view returns (bool result) {

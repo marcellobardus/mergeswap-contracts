@@ -4,15 +4,18 @@ pragma solidity ^0.8.9;
 import {TrieProofs} from "./lib/TrieProofs.sol";
 import {RLP} from "./lib/RLP.sol";
 
+import {Multicall} from "./Multicall.sol";
+
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract WrappedPoWETH is ERC20 {
+contract WrappedPoWETH is ERC20, Multicall {
     using TrieProofs for bytes;
     using RLP for RLP.RLPItem;
     using RLP for bytes;
 
     event Withdrawal(uint256 id, uint256 amount, address withdrawMadeBy, address recipient);
+    event StateRootRelay(uint256 block, bytes32 root);
 
     uint8 private constant ACCOUNT_STORAGE_ROOT_INDEX = 2;
 
@@ -85,5 +88,6 @@ contract WrappedPoWETH is ERC20 {
     ) public {
         require(relayer == ECDSA.recover(stateRoot, signature));
         stateRoots[blockNumber] = stateRoot;
+        emit StateRootRelay(blockNumber, stateRoot);
     }
 }
