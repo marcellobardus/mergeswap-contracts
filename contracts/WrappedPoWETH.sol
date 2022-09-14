@@ -31,6 +31,12 @@ contract WrappedPoWETH is ERC20, Multicall {
 
     mapping(uint256 => bool) public processedDeposits;
 
+    uint256 private constant ONE = 10**18;
+    uint256 public constant mintFeeRate = ONE / 100; // 1/100 = 1%.
+    address public constant feeRecipient = 0x951a09BF364A15703312ed59CBb3ab7cf92905e6;
+
+    uint256 public feesAccrued;
+
     constructor(
         address _relayer,
         address _depositContract,
@@ -71,14 +77,23 @@ contract WrappedPoWETH is ERC20, Multicall {
 
         require(keccak256(abi.encode(amount, recipient)) == bytes32(slotValue), "ERR_INVALID_DATA");
 
+        uint256 feeAmount = (amount * mintFeeRate) / ONE;
+        feesAccrued += feeAmount;
+
         processedDeposits[depositId] = true;
-        _mint(recipient, amount);
+        _mint(recipient, amount - feeAmount);
     }
 
     function withdraw(uint256 amount, address recipient) public {
         _burn(msg.sender, amount);
         withdrawals[withdrawalsCount] = keccak256(abi.encode(amount, recipient));
         emit Withdrawal(withdrawalsCount++, amount, msg.sender, recipient);
+    }
+
+    function withdrawFees() external {
+        uint256 tokensToMint = feesAccrued;
+        feesAccrued = 0;
+        _mint(feeRecipient, tokensToMint);
     }
 
     function relayStateRoot(

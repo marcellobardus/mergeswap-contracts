@@ -103,7 +103,7 @@ describe("ReceiveWPoW", function () {
       const tokensMinted = await wrappedPowETH.balanceOf(
         "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398"
       );
-      expect(tokensMinted).equal(parseEther("1"));
+      expect(tokensMinted).equal(parseEther("0.99"));
     });
 
     it("Should revert in case a deposit is attempted to be minted twice", async () => {
@@ -146,7 +146,7 @@ describe("ReceiveWPoW", function () {
       const tokensMinted = await wrappedPowETH.balanceOf(
         "0xF6db677FB4c73A98CB991BCa6C01bD4EC98e9398"
       );
-      expect(tokensMinted).equal(parseEther("1"));
+      expect(tokensMinted).equal(parseEther("0.99"));
     });
   });
 });
